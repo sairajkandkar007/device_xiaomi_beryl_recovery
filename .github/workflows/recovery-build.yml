@@ -139,42 +139,70 @@ jobs:
       - name: Prepare device tree for TWRP
         run: |
           set -euxo pipefail
-          cd "workspace/$DEVICE_PATH"
-          test -f BoardConfig.mk
-          test -f device.mk
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import re
 
-          # Remove the known OrangeFox Soong include and FOX/OF/PB variable assignments only.
-          sed -i '\|^[[:space:]]*-include bootable/recovery/orangefox_soong.mk[[:space:]]*$|d' BoardConfig.mk
-          sed -i '/^[[:space:]]*\(FOX_[A-Za-z0-9_]*\|OF_[A-Za-z0-9_]*\|PB_[A-Za-z0-9_]*\)[[:space:]]*[:?+]*=/d' BoardConfig.mk device.mk
-          sed -i '/^[[:space:]]*include[[:space:]].*orangefox.*\.mk/d' BoardConfig.mk device.mk
-          rm -f vendorsetup.sh fox_*.mk pb_*.mk
+          root = Path("workspace") / os.environ["DEVICE_PATH"]
+          device = os.environ["DEVICE_NAME"]
+          product = os.environ["MAKEFILE_NAME"]
+          board = root / "BoardConfig.mk"
+          device_mk = root / "device.mk"
+          if not board.is_file() or not device_mk.is_file():
+              raise SystemExit("Device tree must contain BoardConfig.mk and device.mk")
 
-          cat > AndroidProducts.mk <<EOF
-          PRODUCT_MAKEFILES := \
-              $(LOCAL_DIR)/${MAKEFILE_NAME}.mk
+          # Remove OrangeFox/PitchBlack-specific make assignments and includes only.
+          for path in (board, device_mk):
+              lines = path.read_text().splitlines()
+              kept = []
+              for line in lines:
+                  if re.match(r"^\s*-?include\s+.*orangefox.*\.mk\s*$", line, re.I):
+                      continue
+                  if re.match(r"^\s*(?:FOX|OF|PB)_[A-Za-z0-9_]*\s*[:?+]*=", line):
+                      continue
+                  kept.append(line)
+              path.write_text("\n".join(kept) + "\n")
 
-          COMMON_LUNCH_CHOICES := \
-              ${MAKEFILE_NAME}-ap2a-eng \
-              ${MAKEFILE_NAME}-ap2a-userdebug
-          EOF
-
-          cat > "${MAKEFILE_NAME}.mk" <<EOF
+          # TWRP product definition; use a quoted Python template so $(...) is
+          # written literally instead of being interpreted as shell substitution.
+          (root / "AndroidProducts.mk").write_text(
+              "PRODUCT_MAKEFILES := \\\n"
+              "    $(LOCAL_DIR)/" + product + ".mk\n\n"
+              "COMMON_LUNCH_CHOICES := \\\n"
+              "    " + product + "-ap2a-eng \\\n"
+              "    " + product + "-ap2a-userdebug\n"
+          )
+          product_text = """# TWRP product for Beryl
+          NOT_ORANGEFOX := 1
           $(call inherit-product, $(SRC_TARGET_DIR)/product/base.mk)
           $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
           $(call inherit-product, vendor/twrp/config/common.mk)
-          $(call inherit-product, $(DEVICE_PATH)/device.mk)
+          $(call inherit-product, device/xiaomi/beryl/device.mk)
 
-          PRODUCT_DEVICE := ${DEVICE_NAME}
-          PRODUCT_NAME := ${MAKEFILE_NAME}
+          PRODUCT_DEVICE := @DEVICE@
+          PRODUCT_NAME := @PRODUCT@
           PRODUCT_BRAND := POCO
           PRODUCT_MODEL := POCO M7 Pro 5G
           PRODUCT_MANUFACTURER := Xiaomi
-          EOF
+          PRODUCT_PROPERTY_OVERRIDES += ro.twrp.vendor_boot=true
+          """
+          product_text = "\n".join(line[10:] if line.startswith("          ") else line for line in product_text.splitlines()) + "\n"
+          product_text = product_text.replace("@DEVICE@", device).replace("@PRODUCT@", product)
+          (root / (product + ".mk")).write_text(product_text)
 
-          if grep -nE 'orangefox_soong\.mk|bootable/recovery/orangefox|FOX_[A-Za-z0-9_]+[[:space:]]*[:?+]?=' BoardConfig.mk device.mk AndroidProducts.mk "${MAKEFILE_NAME}.mk"; then
-            echo "OrangeFox build references remain in converted product files."
-            exit 1
-          fi
+          # Do not let the old OrangeFox lunch script or products register.
+          (root / "vendorsetup.sh").unlink(missing_ok=True)
+          for pattern in ("fox_*.mk", "pb_*.mk"):
+              for path in root.glob(pattern):
+                  path.unlink()
+
+          # Fail closed if OrangeFox-specific build hooks remain active.
+          for path in (board, device_mk, root / "AndroidProducts.mk", root / (product + ".mk")):
+              content = path.read_text()
+              if re.search(r"orangefox_soong\.mk|bootable/recovery/orangefox|(?:^|\n)\s*(?:FOX|OF|PB)_[A-Za-z0-9_]*\s*[:?+]?=", content, re.I):
+                  raise SystemExit(f"OrangeFox/PitchBlack build hook remains in {path}")
+          PY
 
       - name: Resolve device dependencies
         run: |
@@ -233,7 +261,11 @@ jobs:
         id: output
         run: |
           set -euxo pipefail
-          image="workspace/out/target/product/$DEVICE_NAME/$BUILD_TARGET.img"
+          case "$BUILD_TARGET" in
+            vendorboot) image="workspace/out/target/product/$DEVICE_NAME/vendor_boot.img" ;;
+            recovery) image="workspace/out/target/product/$DEVICE_NAME/recovery.img" ;;
+            *) echo "Unsupported BUILD_TARGET: $BUILD_TARGET"; exit 1 ;;
+          esac
           test -s "$image"
           echo "image=$image" >> "$GITHUB_OUTPUT"
           sha256sum "$image"
