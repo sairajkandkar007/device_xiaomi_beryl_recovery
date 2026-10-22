@@ -248,6 +248,21 @@ jobs:
         with:
           swap-size-gb: 12
 
+      - name: Inspect TWRP kernel build rules
+        run: |
+          set -eu
+          cd workspace
+          kernel_mk="vendor/twrp/build/tasks/kernel.mk"
+          if [ ! -f "$kernel_mk" ]; then
+            echo "TWRP kernel.mk not found at $kernel_mk"
+            find vendor -path '*/build/tasks/kernel.mk' -print 2>/dev/null | head -n 30 || true
+            exit 1
+          fi
+          echo "=== $kernel_mk lines 575-610 ==="
+          nl -ba "$kernel_mk" | sed -n '575,610p'
+          echo "=== Whitespace-visible view ==="
+          sed -n '575,610p' "$kernel_mk" | cat -vet
+
       - name: Build recovery image
         run: |
           set -eo pipefail
