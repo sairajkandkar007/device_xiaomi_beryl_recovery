@@ -250,11 +250,14 @@ jobs:
 
       - name: Build recovery image
         run: |
-          set -euxo pipefail
+          set -eo pipefail
           cd workspace
+          # Android/TWRP envsetup is not compatible with Bash nounset during initialization.
+          set +u
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           lunch "${MAKEFILE_NAME}-ap2a-eng"
+          set -u
           make "${BUILD_TARGET}image" -j2
 
       - name: Verify output image
