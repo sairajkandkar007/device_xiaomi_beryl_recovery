@@ -1,115 +1,90 @@
-## OrangeFox Recovery device tree for the Redmi Note 14 5G / POCO M7 Pro 5G (Beryl)
+# AERA Recovery device tree — Xiaomi Beryl
 
-The Redmi Note 14 5G / POCO M7 Pro 5G (codenamed _"beryl"_) is a mid-range smartphone from Xiaomi/POCO.
+Device tree for the **Redmi Note 14 5G / POCO M7 Pro 5G** (codename `beryl`), adapted from the existing working OrangeFox/TWRP tree for **AERA Recovery 16.0**.
+
+> **Port status: initial AERA adaptation — not yet validated by a successful AERA build and on-device test.**
+>
+> The previous OrangeFox tree was working. This port intentionally keeps the Beryl-specific kernel, DTB, vendor ramdisk, fstab, init scripts, partition layout, encryption services and vendor-module list unchanged. A successful build is not proof that boot, decryption or flashing is safe; test before daily use.
 
 ## Device specifications
 
-| Feature                        | Specification                                                                             |
-| -----------------------------: | :---------------------------------------------------------------------------------------- |
-| Chipset                        | MediaTek Dimensity 7025-Ultra (6 nm)                                                      |
-| CPU                            | Octa-core (2x2.5 GHz Cortex-A78 & 6x2.0 GHz Cortex-A55)                                   |
-| GPU                            | IMG BXM-8-256                                                                              |
-| Memory                         | 6GB / 8GB RAM                                                                              |
-| Shipped OS                     | Android 14 (HyperOS)                                                                      |
-| Storage                        | 128GB / 256GB                                                                     |
-| SIM                            | Nano-SIM + Nano-SIM                                                                       |
-| MicroSD                        | microSDXC                                                                                 |
-| Battery                        | Li-Po 5110 mAh (non-removable), 45W fast charging                                          |
-| Dimensions                     | 162.4 x 75.7 x 8.0 mm                                                                     |
-| Display                        | 6.67 inches, AMOLED, 120Hz, 1080 x 2400 pixels                                             |
+| Feature | Specification |
+|---|---|
+| Chipset | MediaTek Dimensity 7025-Ultra (MT6855) |
+| CPU | Octa-core: 2× Cortex-A78 + 6× Cortex-A55 |
+| GPU | IMG BXM-8-256 |
+| Memory | 6 GB / 8 GB RAM |
+| Shipped OS | Android 14 (HyperOS) |
+| Storage | 128 GB / 256 GB |
+| Display | 6.67-inch AMOLED, 120 Hz, 1080 × 2400 |
+| Battery | 5110 mAh |
+| Recovery layout | Recovery ramdisk in `vendor_boot`, boot header v4 |
+| Dynamic partitions | Virtual A/B |
 
-## Device picture
+## Repository layout
 
-<table>
-<tr>
-<td><img src="https://fdn2.gsmarena.com/vv/pics/xiaomi/xiaomi-redmi-note-14-5g-1.jpg" width="300"/></td>
-<td><img src="https://cdn.idealo.com/folder/Product/206210/1/206210107/s11_produktbild_max/xiaomi-poco-m7-pro-5g-8gb-256gb-violeta.jpg" width="300"/></td>
-</tr>
-</table>
+- `BoardConfig.mk` — hardware, boot image, partition, crypto and AERA build flags.
+- `device.mk` — Beryl-specific packages, vendor ramdisk files and recovery dependencies.
+- `aera_beryl.mk` — AERA UI and device-specific recovery behavior.
+- `twrp_beryl.mk` — product definition retained with AERA's `twrp_` product naming convention.
+- `vendorsetup.sh` — AERA build environment options.
+- `recovery/root/` and `vendor_ramdisk/` — device-specific recovery/init resources.
 
----
+## Build
 
-## What's working & what's not working
+Use the AERA 16.0 source tree and a manifest compatible with this device tree.
 
-The recovery is currently functional for the major recovery and flashing operations. Most hardware and recovery features are working as expected, with only a few known limitations.
+```bash
+# From the AERA source root; use a fresh shell.
+export AERA_BUILD_DEVICE=beryl
+source build/envsetup.sh
+lunch twrp_beryl-bp2a-eng
+mka recoveryimage
+```
 
-| Feature | Status | Notes |
-| :-------------------------- | :----: | :-------------------------------------------------------------------------- |
-| Touchscreen                 |   ✅   | Touch input works correctly in OrangeFox.                                   |
-| Display                     |   ✅   | Display output and brightness are working normally.                        |
-| USB                         |   ✅   | USB connection works correctly in recovery.                                |
-| ADB                         |   ✅   | ADB connection is functional and can be used from a computer.              |
-| Fastboot/FastbootD                   |   ✅   | FastbootD/bootloader functionality works as expected.                       |
-| Internal Storage            |   ✅   | Internal storage can be accessed normally from recovery.                   |
-| MicroSD                     |   ✅   | microSD storage is detected and accessible.                                |
-| Decryption                  |   ✅   | Device storage decryption is working.                                      |
-| Backup & Restore             |   ✅   | Recovery backup and restore operations are functional.                     |
-| Flashing ZIPs               |   ✅   | ROMs, Magisk, patches, and other flashable ZIPs can be flashed.            |                             |
-| Mounting Partitions         |   ✅   | Supported partitions can be mounted correctly.                             |
-| Reboot Options              |   ✅   | Rebooting to System, Recovery, and Bootloader works as expected.           |
-| Vibration                   |   ✅   | Vibration/haptic feedback is working properly in recovery.            |
-| Flashlight                  |   ✅   | The flashlight/torch function is working in recovery.        |
-| SELinux                     |   ⚠️   | SELinux is currently running in **Permissive** mode.                       |
+The expected output directory is:
 
-### Known limitations
+```
+out/target/product/beryl/
+```
 
-- ⚠️ **SELinux:** The recovery currently runs with SELinux in **Permissive** mode rather than Enforcing.
+Check the build log and confirm the generated image's boot header, ramdisk placement and size before testing. Do not assume that an image produced for another device or an old build artifact is suitable.
 
-> **Note:** Apart from the limitations listed above, the recovery is considered functional for normal recovery, flashing, backup, restore, wiping, and related operations.
+## Initial validation checklist
 
----
+Before considering the port usable, test on the exact supported firmware and keep a known-good restore path.
 
----
-# Flashing
-## Flashing with an installed custom recovery (OrangeFox/TWRP/PBRP/etc.):
-    * Download the OrangeFox zip installer file
-    * Reboot your device to your custom recovery
-    * Flash the OrangeFox zip installer
-    * Reboot to OrangeFox after flashing
+- [ ] AERA image boots from the correct `vendor_boot` recovery path.
+- [ ] Display, touch, brightness and USB ADB work.
+- [ ] Internal storage mounts and decrypts with a PIN/pattern.
+- [ ] Boot without a screen lock reaches recovery normally.
+- [ ] Metadata and userdata mount/format behavior is verified on a safe test setup.
+- [ ] MTP, sideload and fastbootd are tested independently.
+- [ ] Vendor modules load at the correct stage.
+- [ ] Backup/restore and non-destructive ZIP installation are verified.
+- [ ] Reboot to system, recovery and bootloader works.
 
-## Flashing with Fastboot - only if there is no installed custom recovery:
-    * Download the OrangeFox recovery image
-    * Reboot your device to bootloader/fastboot mode
-    * Flash or boot the OrangeFox recovery image according to the device's partition layout
-    * Reboot to recovery
-        * Reboot to System and configure the Android ROM
-    * Reboot to OrangeFox and flash the OrangeFox zip installer if required
+**Encryption note:** the tree carries forward the existing MediaTek KeyMint/Keymaster, Gatekeeper and prepdecrypt integration. AERA's crypto flags do not independently guarantee decryption. Validate service ordering and successful unlock on the intended ROM before relying on it.
 
----
+**SELinux note:** the inherited device configuration currently sets recovery SELinux permissive for debugging. This is not an enforcing configuration and should be revisited only with complete policy and boot-log validation.
 
-### Device tree
-Available at (https://github.com/IQ-HARRY7/device_xiaomi_beryl_recovery)
+## Flashing precautions
 
----
----
+Do not flash this initial AERA port over your only working recovery. First build it, inspect the resulting image, and test it using a device-appropriate temporary boot or a verified restore procedure. Beryl uses recovery in `vendor_boot`; do not treat it as a conventional standalone recovery-partition device. Never flash a generic recovery image to `boot`, `vendor_boot`, or `super` without verifying the exact image and target.
 
-<h2 align="center">✨ Credits & Thanks</h2>
+## Credits
 
-<p align="center">
-  <i>This project wouldn't be where it is without the contributions, expertise, and encouragement of the people below.</i><br>
-  <i>Sincere thanks to everyone who played a part in making it happen.</i>
-</p>
+- **IQ_HARRY_07** — Beryl device tree maintenance and testing.
+- **Khargosxh18** — Device tree rebasing and adaptation.
+- **Darthjabba9** — Technical mentorship and project support.
+- **Azzychy** — Assistance and troubleshooting.
+- **Specko** — Base tree contributions and technical direction.
+- **Eyad** — Project support and troubleshooting.
+- **!Cloud** — Base tree contributions and pull requests.
+- **KoaaN** — Decryption support and V36 prebuilt assistance.
+- **Sharp shooter** — Device tree refinements.
+- **egaschnsk** — `vendor_boot` implementation references.
+- **Aditya Prasad** — Project assistance.
+- **All testers and contributors** — Testing, feedback and support.
 
-<br>
-
-- 🛠️ **Khargosxh18** — Device tree rebasing and adaptation
-- 🧭 **Darthjabba9** — Technical mentorship and project-wide support
-- 🤝 **Azzychy** — Valuable assistance and encouragement through the toughest phases
-- 🌳 **Specko** — Base tree contributions and technical direction
-- 🔧 **Eyad** — Ongoing project support, troubleshooting, and surviving Windows BS — bro is pro
-- 🚀 **!Cloud** — Base tree contributions, pull requests, and collaborative development
-- 🔐 **KoaaN** — Decryption support and V36 prebuilt assistance
-- 🧩 **Sharp shooter** — Device tree refinements and base tree modifications
-- 📦 **egaschnsk** — `vendor_boot` implementation references
-- 😭 **Aditya Prasad** — For absolutely no documented reason whatsoever (still not sure why bro is here 😐)
-- ✨ **Sairaj** - For testing,help & support with Building 
-- 🎊 And all Testers
-
-- Helps are not judged by placing (first-last) everybody helped & i appreciate all of them ♥️🎊
-<br>
-
-<p align="center">
-  <sub>❤️ Thanks to everyone who contributed, tested, advised, or simply helped along the way.</sub>
-</p>
-
----
+AERA Recovery project: https://aera-recovery.com/
