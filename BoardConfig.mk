@@ -14,13 +14,12 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 BUILD_BROKEN_PREBUILT_ELF_FILES := true
 BUILD_BROKEN_MISSING_REQUIRED_MODULES := true
 SOONG_ALLOW_MISSING_DEPENDENCIES := true
--include bootable/recovery/orangefox_soong.mk
 
 # Architecture
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
 TARGET_CPU_ABI := arm64-v8a
-TARGET_CPU_ABI2 := 
+TARGET_CPU_ABI2 :=
 TARGET_CPU_VARIANT := generic
 TARGET_CPU_VARIANT_RUNTIME := cortex-a55
 
@@ -187,32 +186,33 @@ AB_OTA_PARTITIONS += \
 # Verified Boot
 BOARD_AVB_ENABLE := true
 
-# Crypto
-TW_INCLUDE_CRYPTO := true
-TW_INCLUDE_CRYPTO_FBE := $(TW_INCLUDE_CRYPTO)
-BOARD_USES_METADATA_PARTITION := $(TW_INCLUDE_CRYPTO)
-TW_INCLUDE_FBE_METADATA_DECRYPT := $(TW_INCLUDE_CRYPTO)
-TW_USE_FSCRYPT_POLICY := 2
+# AERA crypto configuration
+FIXED_DECRYPT := true
+AERA_INCLUDE_CRYPTO := $(FIXED_DECRYPT)
+AERA_INCLUDE_CRYPTO_FBE := $(FIXED_DECRYPT)
+AERA_INCLUDE_FBE_METADATA_DECRYPT := $(FIXED_DECRYPT)
+BOARD_USES_METADATA_PARTITION := $(FIXED_DECRYPT)
+AERA_USE_FSCRYPT_POLICY := 2
 
-# TWRP Configuration
+# General recovery configuration
 RECOVERY_SDCARD_ON_DATA := true
-TW_FRAMERATE := 60
-TW_THEME := portrait_hdpi
-TW_EXTRA_LANGUAGES := false
-TW_SCREEN_BLANK_ON_BOOT := false
-TW_INPUT_BLACKLIST := "hbtp_vm"
-TW_INCLUDE_REPACKTOOLS := false
-TW_EXCLUDE_APEX := true
-TW_EXCLUDE_PYTHON := true
-TW_EXCLUDE_TWRPAPP := true
+AERA_FRAMERATE := 60
+AERA_THEME := portrait_hdpi
+AERA_EXTRA_LANGUAGES := false
+AERA_NO_SCREEN_BLANK := true
+AERA_INPUT_BLACKLIST := "hbtp_vm"
+AERA_INCLUDE_REPACKTOOLS := false
+AERA_EXCLUDE_APEX := true
+AERA_INCLUDE_FASTBOOTD := true
+AERA_INCLUDE_RESETPROP := true
+AERA_INCLUDE_LIBRESETPROP := true
 TARGET_USES_MKE2FS := true
-TW_INCLUDE_NTFS_3G := false
-TW_USE_TOOLBOX := true
-TW_INCLUDE_RESETPROP := true
-TW_EXCLUDE_DEFAULT_USB_INIT := true
+AERA_INCLUDE_NTFS_3G := false
+AERA_USE_TOOLBOX := true
+AERA_EXCLUDE_DEFAULT_USB_INIT := true
 
 # Debug flags
-TWRP_INCLUDE_LOGCAT := true
+AERA_INCLUDE_LOGCAT := true
 TARGET_USES_LOGD := true
 
 # Vendor_Boot
@@ -223,35 +223,28 @@ BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
 BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT := true
 
 # Set brightness path and level
-TW_DEFAULT_BRIGHTNESS := 400
-TW_MAX_BRIGHTNESS := 2047
-TW_BRIGHTNESS_PATH := "/sys/class/leds/lcd-backlight/brightness"
+AERA_DEFAULT_BRIGHTNESS := 400
+AERA_MAX_BRIGHTNESS := 2047
+AERA_BRIGHTNESS_PATH := "/sys/class/leds/lcd-backlight/brightness"
 
 # Battery & CPU Temp
-TW_CUSTOM_BATTERY_PATH := "/sys/class/power_supply/battery"
-TW_CUSTOM_CPU_TEMP_PATH := "/sys/class/thermal/thermal_zone1/temp"
+AERA_CUSTOM_CPU_TEMP_PATH := "/sys/class/thermal/thermal_zone1/temp"
 
 # Haptics
-TW_NO_HAPTICS := false
+AERA_NO_HAPTICS := false
 
 # Flashlight
-OF_FLASHLIGHT_ENABLE := 1
-OF_FL_PATH1 := /tmp/flashlight
+AERA_FLASHLIGHT_ENABLE := 1
+AERA_FL_PATH1 := /tmp/flashlight
 
-# PitchBlack Recovery Project (PBRP) Configuration
-PB_DEVICE_RATIO := "20:9"
-PB_TORCH_PATH := "/sys/class/leds/flashlight"
-PB_TORCH_MAX_BRIGHTNESS := 1
-PB_DISABLE_DEFAULT_DM_VERITY := true
-PB_DISABLE_DEFAULT_TREBLE_COMP := true
+# Device identity and vendor modules
+AERA_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
+AERA_LOAD_VENDOR_MODULES := "fts_touch_i2c.ko lct_tp.ko xiaomi_tp.ko xiaomi_fp.ko adsp.ko nfc_i2c.ko mtk_battery_manager.ko mt6375-battery.ko auth_battery.ko charger_class.ko mtk_charger_framework.ko regulator-vibrator.ko flashlight.ko lm3644.ko"
+AERA_LOAD_VENDOR_MODULES_EXCLUDE_GKI := true
+
+# Recovery UI/build identity
 MAINTAINER := "🔥IQ_HARRY_07🔥"
 TW_DEVICE_VERSION := beryl | 🔥IQ_HARRY_07🔥
 
-TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
-
-TW_LOAD_VENDOR_MODULES := "fts_touch_i2c.ko lct_tp.ko xiaomi_tp.ko xiaomi_fp.ko adsp.ko nfc_i2c.ko mtk_battery_manager.ko mt6375-battery.ko auth_battery.ko charger_class.ko mtk_charger_framework.ko regulator-vibrator.ko flashlight.ko lm3644.ko"
-
-TW_LOAD_VENDOR_MODULES_EXCLUDE_GKI := true
-
-# use this flag else you will get BlueFox
+# Use the RGBX format required by this device's recovery display
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
