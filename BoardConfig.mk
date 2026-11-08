@@ -201,13 +201,11 @@ AERA_THEME := portrait_hdpi
 AERA_EXTRA_LANGUAGES := false
 AERA_NO_SCREEN_BLANK := true
 AERA_INPUT_BLACKLIST := "hbtp_vm"
-AERA_INCLUDE_REPACKTOOLS := false
 AERA_EXCLUDE_APEX := true
 AERA_INCLUDE_FASTBOOTD := true
 AERA_INCLUDE_RESETPROP := true
 AERA_INCLUDE_LIBRESETPROP := true
 TARGET_USES_MKE2FS := true
-AERA_INCLUDE_NTFS_3G := false
 AERA_USE_TOOLBOX := true
 AERA_EXCLUDE_DEFAULT_USB_INIT := true
 
@@ -230,21 +228,11 @@ AERA_BRIGHTNESS_PATH := "/sys/class/leds/lcd-backlight/brightness"
 # Battery & CPU Temp
 AERA_CUSTOM_CPU_TEMP_PATH := "/sys/class/thermal/thermal_zone1/temp"
 
-# Haptics
-AERA_NO_HAPTICS := false
-
-# Flashlight
-AERA_FLASHLIGHT_ENABLE := 1
-AERA_FL_PATH1 := /tmp/flashlight
-
 # Device identity and vendor modules
 AERA_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
 AERA_LOAD_VENDOR_MODULES := "fts_touch_i2c.ko lct_tp.ko xiaomi_tp.ko xiaomi_fp.ko adsp.ko nfc_i2c.ko mtk_battery_manager.ko mt6375-battery.ko auth_battery.ko charger_class.ko mtk_charger_framework.ko regulator-vibrator.ko flashlight.ko lm3644.ko"
 AERA_LOAD_VENDOR_MODULES_EXCLUDE_GKI := true
 
 # Recovery UI/build identity
-MAINTAINER := "🔥IQ_HARRY_07🔥"
-TW_DEVICE_VERSION := beryl | 🔥IQ_HARRY_07🔥
-
 # Use the RGBX format required by this device's recovery display
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
