@@ -32,23 +32,36 @@ Device tree for the **Redmi Note 14 5G / POCO M7 Pro 5G** (codename `beryl`), ad
 
 ## Build
 
-Use the AERA 16.0 source tree and a manifest compatible with this device tree.
+### GitHub Actions
+
+This repository includes a manual GitHub Actions workflow:
+
+`.github/workflows/AERA-Build.yml`
+
+1. Open the repository's **Actions** tab.
+2. Select **AERA Recovery - Beryl Build**.
+3. Select **Run workflow** on branch `fox_14.1`.
+4. Keep the default device-tree branch and `vendorbootimage` target for the Beryl vendor_boot recovery layout.
+5. Download the generated artifact from the completed workflow run.
+
+The workflow syncs the official AERA manifest branch `aera-16.0`, clones this device tree, exports `AERA_BUILD_DEVICE=beryl` before sourcing the build environment, and builds the selected image. Artifacts are retained by GitHub Actions for 14 days. The workflow does not publish a flashable release automatically.
+
+### Manual build
+
+Use the AERA 16.0 source tree and manifest:
 
 ```bash
-# From the AERA source root; use a fresh shell.
+repo init -u https://github.com/AERA-Recovery/android_manifest.git -b aera-16.0
+repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc)
+git clone -b fox_14.1 https://github.com/sairajkandkar007/device_xiaomi_beryl_recovery.git device/xiaomi/beryl
+
 export AERA_BUILD_DEVICE=beryl
 source build/envsetup.sh
 lunch twrp_beryl-bp2a-eng
-mka recoveryimage
+mka adbd vendorbootimage
 ```
 
-The expected output directory is:
-
-```
-out/target/product/beryl/
-```
-
-Check the build log and confirm the generated image's boot header, ramdisk placement and size before testing. Do not assume that an image produced for another device or an old build artifact is suitable.
+The output directory is `out/target/product/beryl/`. Check the build log and confirm the generated image's boot header, ramdisk placement and size before testing. Do not assume that an image produced for another device or an old build artifact is suitable.
 
 ## Initial validation checklist
 
